@@ -73,8 +73,22 @@ class rrule2text(rr): # class rr is class rrule in module dateutil.rrule
         (12, u'every twelfth'),
     )
 
-    def rrule2text(self):
+    def rrule2text(self, date_format="%B %d, %Y", time_format="%I:%M %p"):
+        """
+        Prints a recurrence rule in plain English (or whatever language, once translation
+        is supported. :)
+        
+        `date_format`
+        An optional argument that specifies the format to print dates using strftime 
+        formatting rules.
+        
+        `time_format`
+        An optional argument that specifies the format to print times using strftime
+        formatting rles.
+        """
+        
 
+        dtstart = self._dtstart
         freq = self._freq
         interval = self._interval
         wkst = self._wkst
@@ -109,43 +123,60 @@ class rrule2text(rr): # class rr is class rrule in module dateutil.rrule
                 if ord[0] == rule_pair[1]:
                     text_description.append(ord[1])
                     break
-            #p_ordinal = rrule2text.ORDINAL[rule_pair[1]][1]
-            #text_description.append(p_ordinal)
 
             #  Get the weekday name
-            # import pdb; pdb.set_trace()
             p_weekday = weekday(rule_pair[0])
             name = rrule2text.WEEKDAY_MAP[unicode(p_weekday)]
-            #p_weekday = rrule2text.WEEKDAY_LONG[rule_pair[0] == 7 and 1 or rule_pair[0]][1]
             text_description.append(name)
             
+            text_description.append("at")
+            
+            text_description.append(dtstart.strftime(time_format))
+            
             # tack on "and interval" for the next item in the list
-            text_description.extend([u"and", p_interval])
+            text_description.extend(["and", p_interval])
 
         # remove the last "and interval" because it's hanging off the end
         # TODO improve this
         text_description = text_description[:-2]
         
-        if count != 0:
-            text_description.extend([unicode(int2word(count).rstrip()), u"times"])
+        if count:
+            text_description.append("%s %s" % (int2word(count).rstrip(), "times"))
         elif until:
-            text_description.extend([u"until", unicode(until)])
+            text_description.extend(["until", until.strftime(date_format)])
             
-        return text_description
+        return map(unicode, text_description)
 
-
+    
 class rrule2textTests(unittest.TestCase):
 	def setUp(self):
 		pass
 		
 	def test_not_monthly(self):
+	    testrr = rrule2text(DAILY, byweekday=MO, dtstart=datetime(2011, 8, 15), until=datetime(2012, 8, 15))
+	    self.assertRaises(Rrule2textError, testrr.rrule2text)
+
 	    testrr = rrule2text(WEEKLY, byweekday=MO, dtstart=datetime(2011, 8, 15), until=datetime(2012, 8, 15))
 	    self.assertRaises(Rrule2textError, testrr.rrule2text)
+
+	    testrr = rrule2text(YEARLY, byweekday=MO, dtstart=datetime(2011, 8, 15), until=datetime(2012, 8, 15))
+	    self.assertRaises(Rrule2textError, testrr.rrule2text)
+	    
 		
 	def test_monthly(self):
-	    correct = [u"each", u"third", u"Friday", u"ten", u"times"]
+	    correct = map(unicode, ["each", "third", "Friday", "at", "12:00 AM", "ten times"])
 	    testrr = rrule2text(MONTHLY, byweekday=FR(3), dtstart=datetime(2011, 8, 15), count=10)
 	    self.assertListEqual(testrr.rrule2text(), correct)
+	    
+	    correct = map(unicode, ["every other", "first", "Sunday", "at", "09:00 PM", "until", "August 15, 2012"])
+	    testrr = rrule2text(MONTHLY, interval=2, byweekday=SU(1), dtstart=datetime(2011, 8, 15, 21, 0, 0), until=datetime(2012, 8, 15))
+	    self.assertListEqual(testrr.rrule2text(), correct)
+
+	    correct = map(unicode, ["every other", "first", "Sunday", "at", "09:00 PM", "until", "08/15/2012"])
+	    self.assertListEqual(testrr.rrule2text(date_format="%m/%d/%Y"), correct)
+	    
+	    correct = map(unicode, ["every other", "first", "Sunday", "at", "21:00", "until", "August 15, 2012"])
+	    self.assertListEqual(testrr.rrule2text(time_format="%H:%M"), correct)
 
 
 if __name__ == '__main__':
