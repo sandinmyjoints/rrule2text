@@ -128,9 +128,9 @@ class rrule2text(rr): # class rr is class rrule in module dateutil.rrule
         text_description = text_description[:-2]
         
         if count != 0:
-            text_description.extend([int2word(count), u"times"])
+            text_description.extend([unicode(int2word(count).rstrip()), u"times"])
         elif until:
-            text_description.extend([u"until", until])
+            text_description.extend([u"until", unicode(until)])
             
         return text_description
 
