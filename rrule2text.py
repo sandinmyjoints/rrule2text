@@ -31,13 +31,13 @@ class Rrule2textError(ValueError):
 class rrule2text(rr): # class rr is class rrule in module dateutil.rrule
 
     WEEKDAY_MAP = {
-        'SU': u"Sunday",
-        'MO': u"Monday",
-        'TU': u"Tuesday",
-        'WE': u"Wednesday",
-        'TR': u"Thursday",
-        'FR': u"Friday",
-        'SA': u"Saturday",
+        u'SU': u"Sunday",
+        u'MO': u"Monday",
+        u'TU': u"Tuesday",
+        u'WE': u"Wednesday",
+        u'TR': u"Thursday",
+        u'FR': u"Friday",
+        u'SA': u"Saturday",
     }
     
     ORDINAL = (
@@ -115,8 +115,7 @@ class rrule2text(rr): # class rr is class rrule in module dateutil.rrule
             #  Get the weekday name
             # import pdb; pdb.set_trace()
             p_weekday = weekday(rule_pair[0])
-            name = rrule2text.WEEKDAY_MAP[str(p_weekday)]
-            print "weekday name is %s" % name
+            name = rrule2text.WEEKDAY_MAP[unicode(p_weekday)]
             #p_weekday = rrule2text.WEEKDAY_LONG[rule_pair[0] == 7 and 1 or rule_pair[0]][1]
             text_description.append(name)
             
@@ -141,7 +140,7 @@ class rrule2textTests(unittest.TestCase):
 		
 	def test_not_monthly(self):
 	    testrr = rrule2text(WEEKLY, byweekday=MO, dtstart=datetime(2011, 8, 15), until=datetime(2012, 8, 15))
-	    self.assertRaises(Rrule2textError, testrr.rrule2text())
+	    self.assertRaises(Rrule2textError, testrr.rrule2text)
 		
 	def test_monthly(self):
 	    correct = [u"each", u"third", u"Friday", u"ten", u"times"]
