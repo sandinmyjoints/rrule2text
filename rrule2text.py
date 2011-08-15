@@ -4,7 +4,7 @@
 rrule2text.py
 
 Created by William Bert on 2011-08-12.
-Copyright (c) 2011 __MyCompanyName__. All rights reserved.
+Copyright (c) 2011. All rights reserved.
 """
 
 import sys
@@ -74,8 +74,7 @@ class rrule2text(rr): # class rr is class rrule in module dateutil.rrule
     )
 
     def text(self, date_format="%B %d, %Y", time_format="%I:%M %p"):
-        """
-        Return a recurrence rule in plain English (or whatever language, once translation
+        """Return a recurrence rule in plain English (or whatever language, once translation
         is supported. :)
         
         `date_format`
@@ -87,7 +86,6 @@ class rrule2text(rr): # class rr is class rrule in module dateutil.rrule
         formatting rles.
         """
         
-
         dtstart = self._dtstart
         freq = self._freq
         interval = self._interval
@@ -146,38 +144,96 @@ class rrule2text(rr): # class rr is class rrule in module dateutil.rrule
             text_description.extend(["until", until.strftime(date_format)])
             
         return map(unicode, text_description)
-
+        
+    def __eq__(self, other):
+        """Compare two rrule2text instances."""
+        
+        attrs = [
+         '_byeaster',
+         '_byhour',
+         '_byminute',
+         '_bymonth',
+         '_bymonthday',
+         '_bynmonthday',
+         '_bynweekday',
+         '_bysecond',
+         '_bysetpos',
+         '_byweekday',
+         '_byweekno',
+         '_byyearday',
+         '_count',
+         '_dtstart',
+         '_freq',
+         '_interval',
+         '_timeset',
+         '_tzinfo',
+         '_until',
+         '_wkst',
+        ]
+         
+        for p in attrs:
+            a = getattr(self, p)
+            b = getattr(other, p)
+            if a != b:
+                return False
+            
+        return True
+        
+    def __ne__(self, other):
+        return not (self == other)
     
 class rrule2textTests(unittest.TestCase):
-	def setUp(self):
-		pass
-		
-	def test_not_monthly(self):
-	    testrr = rrule2text(DAILY, byweekday=MO, dtstart=datetime(2011, 8, 15), until=datetime(2012, 8, 15))
-	    self.assertRaises(Rrule2textError, testrr.text)
+    def setUp(self):
+        pass
 
-	    testrr = rrule2text(WEEKLY, byweekday=MO, dtstart=datetime(2011, 8, 15), until=datetime(2012, 8, 15))
-	    self.assertRaises(Rrule2textError, testrr.text)
+    def test_equals(self):
+        r1 = rrule2text(DAILY, dtstart=datetime(2012, 8, 15))
+        r2 = rrule2text(DAILY, dtstart=datetime(2012, 8, 15))
+        self.assertTrue(r1==r2)
+        
+        r1 = rrule2text(DAILY, dtstart=datetime(2012, 8, 15), byweekday=MO)
+        r2 = rrule2text(DAILY, dtstart=datetime(2012, 8, 15), byweekday=MO)
+        self.assertTrue(r1==r2)
+        
+    def test_not_equals(self):
+        r1 = rrule2text(DAILY, dtstart=datetime(2012, 8, 15))
+        r2 = rrule2text(MONTHLY, dtstart=datetime(2012, 8, 15))
+        self.assertFalse(r1==r2)
+        
+        r2 = rrule2text(DAILY, dtstart=datetime(2011, 8, 15))
+        self.assertFalse(r1==r2)
+        
+        r1 = rrule2text(DAILY, dtstart=datetime(2012, 8, 15), byweekday=MO)
+        r2 = rrule2text(DAILY, dtstart=datetime(2012, 8, 15), byweekday=TU)
+        self.assertFalse(r1==r2)
+        
+        
+    def test_not_monthly(self):
+        testrr = rrule2text(DAILY, byweekday=MO, dtstart=datetime(2011, 8, 15), until=datetime(2012, 8, 15))
+        self.assertRaises(Rrule2textError, testrr.text)
 
-	    testrr = rrule2text(YEARLY, byweekday=MO, dtstart=datetime(2011, 8, 15), until=datetime(2012, 8, 15))
-	    self.assertRaises(Rrule2textError, testrr.text)
-	    
-		
-	def test_monthly(self):
-	    correct = map(unicode, ["each", "third", "Friday", "at", "12:00 AM", "ten times"])
-	    testrr = rrule2text(MONTHLY, byweekday=FR(3), dtstart=datetime(2011, 8, 15), count=10)
-	    self.assertListEqual(testrr.text(), correct)
-	    
-	    correct = map(unicode, ["every other", "first", "Sunday", "at", "09:00 PM", "until", "August 15, 2012"])
-	    testrr = rrule2text(MONTHLY, interval=2, byweekday=SU(1), dtstart=datetime(2011, 8, 15, 21, 0, 0), until=datetime(2012, 8, 15))
-	    self.assertListEqual(testrr.text(), correct)
+        testrr = rrule2text(WEEKLY, byweekday=MO, dtstart=datetime(2011, 8, 15), until=datetime(2012, 8, 15))
+        self.assertRaises(Rrule2textError, testrr.text)
 
-	    correct = map(unicode, ["every other", "first", "Sunday", "at", "09:00 PM", "until", "08/15/2012"])
-	    self.assertListEqual(testrr.text(date_format="%m/%d/%Y"), correct)
-	    
-	    correct = map(unicode, ["every other", "first", "Sunday", "at", "21:00", "until", "August 15, 2012"])
-	    self.assertListEqual(testrr.text(time_format="%H:%M"), correct)
+        testrr = rrule2text(YEARLY, byweekday=MO, dtstart=datetime(2011, 8, 15), until=datetime(2012, 8, 15))
+        self.assertRaises(Rrule2textError, testrr.text)
+        
+        
+    def test_monthly(self):
+        correct = map(unicode, ["each", "third", "Friday", "at", "12:00 AM", "ten times"])
+        testrr = rrule2text(MONTHLY, byweekday=FR(3), dtstart=datetime(2011, 8, 15), count=10)
+        self.assertListEqual(testrr.text(), correct)
+        
+        correct = map(unicode, ["every other", "first", "Sunday", "at", "09:00 PM", "until", "August 15, 2012"])
+        testrr = rrule2text(MONTHLY, interval=2, byweekday=SU(1), dtstart=datetime(2011, 8, 15, 21, 0, 0), until=datetime(2012, 8, 15))
+        self.assertListEqual(testrr.text(), correct)
+
+        correct = map(unicode, ["every other", "first", "Sunday", "at", "09:00 PM", "until", "08/15/2012"])
+        self.assertListEqual(testrr.text(date_format="%m/%d/%Y"), correct)
+        
+        correct = map(unicode, ["every other", "first", "Sunday", "at", "21:00", "until", "August 15, 2012"])
+        self.assertListEqual(testrr.text(time_format="%H:%M"), correct)
 
 
 if __name__ == '__main__':
-	unittest.main()
+    unittest.main()
