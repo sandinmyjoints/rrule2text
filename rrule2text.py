@@ -18,9 +18,7 @@ import dateutil
 from dateutil.rrule import * # gets DAILY, WEEKLY, MONTHLY, etc.
 from dateutil.rrule import weekday
 from dateutil.rrule import rrule as rr
-#import dateutil.rrule.weekday as rrule_weekday
 from dateutil.relativedelta import relativedelta as rd
-#import dateutil.relativedelta.weekday as rd_weekday
 
 from int2word import int2word
 
@@ -28,8 +26,16 @@ from int2word import int2word
 class Rrule2textError(ValueError):
     pass
 
-class rrule2text(rr): # class rr is class rrule in module dateutil.rrule
-
+class rrule2text(rr): 
+    """Provide methods that return natural language descriptions of a dateutil.rrule 
+    (aka a recurrence rule). Useful for describing recurring events in a calendar or
+    event app.
+    
+    `rr` 
+    Recurrence rule to get a natural language description of.
+    
+    """
+    
     WEEKDAY_MAP = {
         u'SU': u"Sunday",
         u'MO': u"Monday",
