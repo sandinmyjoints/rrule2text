@@ -7,12 +7,12 @@ Created by William Bert on 2011-08-12.
 Copyright (c) 2011. All rights reserved.
 """
 
+# TODO Add i18n
+
 import sys
 import os
 import unittest
 from datetime import datetime
-
-# TODO Add i18n
 
 import dateutil
 from dateutil.rrule import * # gets DAILY, WEEKLY, MONTHLY, etc.
@@ -92,57 +92,76 @@ class rrule2text(rr):
         formatting rles.
         """
         
-        dtstart = self._dtstart
-        freq = self._freq
-        interval = self._interval
-        wkst = self._wkst
-        until = self._until
-        count = self._count
-        bymonth = self._bymonth
-        byweekno = self._byweekno
-        byyearday = self._byyearday
-        byweekday = self._byweekday
-        bynweekday = self._bynweekday
+        dtstart = self._dtstart # datetime of when each occurrence starts. Defaults to now, down to the second.
+        freq = self._freq # when the recurrence recurs, secondly through yearly. Required.
+        interval = self._interval # how often the recurrence happens, each time through every nth time. Defaults to 1.
+        wkst = self._wkst # Week start day, ie, an int representing which day of the week starts the week, usually Sunday or Monday. Defaults to calendar.firstweekday().
+        until = self._until # datetime until which the recurrence continues. Only it or count is set, not both.
+        count = self._count # Number of times the event happens before it stops. Only it or until is set, not both.
+        tzinfo = self._tzinfo # Time zone information. Defaults to the tzinfo of dtstart.
+        bymonth = self._bymonth # Which month a yearly event recurs in.
+        byweekno = self._byweekno # Which week number a yearly event recurs in.
+        byyearday = self._byyearday # Which day of the year a yearly event recurs in.
+        byweekday = self._byweekday # Which weekday an event recurs in.
+        bynweekday = self._bynweekday # 
         byeaster = self._byeaster
-        bymonthday = self._bymonthday
-        bynmonthday = self._bynmonthday
-        bysetpos = self._bysetpos
+        bymonthday = self._bymonthday # Relative day of the month
+        bynmonthday = self._bynmonthday # Negative relative day of the month
+        bysetpos = self._bysetpos # Must be between -366 and -1 or 1 and 366.
         byhour = self._byhour
         byminute = self._byminute
         bysecond = self._bysecond
+        # YEARLY needs to have bymonth and bymonthday set
+        # MONTHLY needs to have bymonthday set 
+        # WEEKLY needs to have byweekday set
         
         text_description = []
-        if freq != MONTHLY:
-            raise Rrule2textError, "rrule2text only works with monthly frequencies right now."        
+        
+        if freq == YEARLY:
+            pass
+        elif freq == MONTHLY:
             
-        # Get the interval. "Each", "Every other", "Every third", etc.
-        p_interval = rrule2text.INTERVAL[interval-1][1]
-        text_description.append(p_interval)
+            # Get the interval. "Each", "Every other", "Every third", etc.
+            p_interval = rrule2text.INTERVAL[interval-1][1]
+            text_description.append(p_interval)
 
-        # bynweekday is a tuple of (weekday, week_in_month) tuples
-        for rule_pair in bynweekday:
+            # bynweekday is a tuple of (weekday, week_in_month) tuples
+            for rule_pair in bynweekday:
 
-            # Get the ordinal.
-            for ord in rrule2text.ORDINAL:
-                if ord[0] == rule_pair[1]:
-                    text_description.append(ord[1])
-                    break
+                # Get the ordinal.
+                for ord in rrule2text.ORDINAL:
+                    if ord[0] == rule_pair[1]:
+                        text_description.append(ord[1])
+                        break
 
-            #  Get the weekday name
-            p_weekday = weekday(rule_pair[0])
-            name = rrule2text.WEEKDAY_MAP[unicode(p_weekday)]
-            text_description.append(name)
-            
-            text_description.append("at")
-            
-            text_description.append(dtstart.strftime(time_format))
-            
-            # tack on "and interval" for the next item in the list
-            text_description.extend(["and", p_interval])
+                #  Get the weekday name
+                p_weekday = weekday(rule_pair[0])
+                name = rrule2text.WEEKDAY_MAP[unicode(p_weekday)]
+                text_description.append(name)
+                
+                text_description.append("at")
+                
+                text_description.append(dtstart.strftime(time_format))
+                
+                # tack on "and interval" for the next item in the list
+                text_description.extend(["and", p_interval])
 
-        # remove the last "and interval" because it's hanging off the end
-        # TODO improve this
-        text_description = text_description[:-2]
+            # remove the last "and interval" because it's hanging off the end
+            # TODO improve this
+            text_description = text_description[:-2]
+        
+        elif freq == WEEKLY:
+            pass
+        elif freq == DAILY:
+            pass
+        elif freq == HOURLY:
+            pass
+        elif freq == MINUTELY:
+            pass
+        elif freq == SECONDLY:
+            pass
+        else:
+            raise Rrule2textError, "Frequency value of %s is not valid." % freq
         
         if count:
             text_description.append("%s %s" % (int2word(count).rstrip(), "times"))
@@ -178,9 +197,7 @@ class rrule2text(rr):
         ]
          
         for p in attrs:
-            a = getattr(self, p)
-            b = getattr(other, p)
-            if a != b:
+            if getattr(self, p) != getattr(other, p):
                 return False
             
         return True
@@ -214,14 +231,14 @@ class rrule2textTests(unittest.TestCase):
         self.assertFalse(r1==r2)
         
         
-    def test_not_monthly(self):
-        testrr = rrule2text(DAILY, byweekday=MO, dtstart=datetime(2011, 8, 15), until=datetime(2012, 8, 15))
+    def test_invalid_freq(self):
+        testrr = rrule2text(8, byweekday=MO, dtstart=datetime(2011, 8, 15), until=datetime(2012, 8, 15))
         self.assertRaises(Rrule2textError, testrr.text)
 
-        testrr = rrule2text(WEEKLY, byweekday=MO, dtstart=datetime(2011, 8, 15), until=datetime(2012, 8, 15))
+        testrr = rrule2text("a", byweekday=MO, dtstart=datetime(2011, 8, 15), until=datetime(2012, 8, 15))
         self.assertRaises(Rrule2textError, testrr.text)
 
-        testrr = rrule2text(YEARLY, byweekday=MO, dtstart=datetime(2011, 8, 15), until=datetime(2012, 8, 15))
+        testrr = rrule2text(None, byweekday=MO, dtstart=datetime(2011, 8, 15), until=datetime(2012, 8, 15))
         self.assertRaises(Rrule2textError, testrr.text)
         
         
