@@ -41,7 +41,7 @@ class rrule2text(rr):
         u'MO': u"Monday",
         u'TU': u"Tuesday",
         u'WE': u"Wednesday",
-        u'TR': u"Thursday",
+        u'TH': u"Thursday",
         u'FR': u"Friday",
         u'SA': u"Saturday",
     }
